@@ -10,7 +10,7 @@ module Twelf =
 
         exception AlreadyDefined
 
-        let is_already_defined context name =
+        let is_already_defined name context =
             let types, constants, functions, rules = match context with Context (ts, cs, fs, rs) -> (ts, cs, fs, rs) in
             if List.exists (fun x -> match x with Type s -> s = name) types
             && List.exists (fun x -> match x with Constant (s, _) -> s = name) constants
@@ -20,24 +20,24 @@ module Twelf =
             else
                 (types, constants, functions, rules)
 
-        let define_type context name =
+        let define_type name context =
             let types, constants, functions, rules = is_already_defined context name in
             Context ((Type name) :: types, constants, functions, rules)
 
-        let define_constant context name ttype =
+        let define_constant name ttype context =
             let types, constants, functions, rules = is_already_defined context name in
             Context (types, (Constant (name, ttype)) :: constants, functions, rules)
 
-        let define_function context name types return_type =
+        let define_function name types return_type context =
             let types, constants, functions, rules = is_already_defined context name in
             Context (types, constants, (Function (name, types, return_type)) :: functions, rules)
 
-        let define_rule context name functions =
+        let define_rule name functions context =
             let types, constants, functions, rules = is_already_defined context name in
             Context (types, constants, functions, (Rule (name, functions)) :: rules)
 
         (* TODO *)
-        let rec eval context func params =
+        let rec eval func params context =
             let Context (types, constants, functions, rules) = context in
             let Function (fname, para_type, return_type) = func in
             let variables = List.filter (fun x -> match x with ParamV _ -> true | _ -> false) params in
