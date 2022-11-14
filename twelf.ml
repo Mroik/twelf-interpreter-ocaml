@@ -3,12 +3,13 @@ module Twelf =
         type tt = Type of string
         type const = Constant of string * tt
         type func = Function of string * tt list * tt
-        type rule = Rule of string * func list
+        type rule = Rule of string * parameter
+        and parameter = ParamC of const | ParamF of func * parameter list | ParamV of variable
+        and variable = Variable of string
         type context = Context of tt list * const list * func list * rule list
-        type variable = Variable of string
-        type parameter = ParamC of const | ParamF of func * parameter list | ParamV of variable
 
         exception AlreadyDefined
+        let empty_context = Context([], [], [], [])
 
         let is_already_defined name context =
             let Context (types, constants, functions, rules) = context in
@@ -19,6 +20,12 @@ module Twelf =
                 raise AlreadyDefined
             else
                 (types, constants, functions, rules)
+
+        let get_function name (Context (_, _, functions, _)) =
+            let ffs = List.filter (fun (Function (n, _, _)) -> name = n) functions in
+            match ffs with
+            | [] -> None
+            | x :: xs -> Some x
 
         let define_type name context =
             let types, constants, functions, rules = is_already_defined name context in
@@ -32,20 +39,16 @@ module Twelf =
             let types, constants, functions, rules = is_already_defined name context in
             Context (types, constants, (Function (name, types, return_type)) :: functions, rules)
 
-        let define_rule name functions context =
+        let define_rule name parameter context =
             let types, constants, functions, rules = is_already_defined name context in
-            Context (types, constants, functions, (Rule (name, functions)) :: rules)
+            Context (types, constants, functions, (Rule (name, parameter)) :: rules)
 
         (* TODO *)
         let rec eval func params context =
             let Context (types, constants, functions, rules) = context in
             let Function (fname, para_type, return_type) = func in
-            let variables = List.filter (fun x -> match x with ParamV _ -> true | _ -> false) params in
-            let func_rules = List.filter (
-                fun (Rule (_, ff)) ->
-                    let (Function (ffn, _, _)) = List.nth ff 0 in
-                    ffn = fname
-            ) rules in
-            func_rules
+            let variables = List.filter (fun x -> match x with ParamV _ -> true | _ -> false) params
+            |> List.fold_left (fun acc x -> if List.mem x acc then acc else x :: acc) [] in
+            variables
     end
 ;;
