@@ -14,9 +14,9 @@ module Twelf =
         let is_already_defined name context =
             let Context (types, constants, functions, rules) = context in
             if List.exists (fun (Type x) -> x = name) types
-            && List.exists (fun (Constant (x, _)) -> x = name) constants
-            && List.exists (fun (Function (x, _, _)) -> x = name) functions
-            && List.exists (fun (Rule (x, _)) -> x = name) rules then
+            || List.exists (fun (Constant (x, _)) -> x = name) constants
+            || List.exists (fun (Function (x, _, _)) -> x = name) functions
+            || List.exists (fun (Rule (x, _)) -> x = name) rules then
                 raise AlreadyDefined
             else
                 (types, constants, functions, rules)
